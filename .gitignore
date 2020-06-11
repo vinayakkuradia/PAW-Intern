@@ -1,3 +1,4 @@
 .idea
 intern_project/credentials.json
 intern_project/settings.py
+doctype/credentials.py

@@ -30,6 +30,7 @@ def upload(request):
         })
     return render(request, 'upload.html')
 
+'''
 def trial(request):
     if request.method == 'POST' and request.FILES['myfile']:
         myfile = request.FILES['myfile']
@@ -48,5 +49,32 @@ def trial(request):
             'phone_numbers': phone_numbers,
             'dates': dates,
             'others': others
+        })
+    return render(request, 'trial.html')
+'''
+
+def trial(request):
+    if request.method == 'POST' and request.FILES['myfile']:
+        myfile = request.FILES['myfile']
+        fs = FileSystemStorage()
+        filename = fs.save(myfile.name, myfile)
+        uploaded_file_url = fs.url(filename)
+        doctype, text = detect(filename)
+        invoice_id, order_id, customer_id, date_issue, amount_total, amount_due, sender_name, sender_address, sender_vat_id, recipient_name, recipient_address, item_description = entityextract(filename)
+        return render(request, 'trial.html', {
+            'uploaded_file_url': uploaded_file_url,
+            'doctype': doctype,
+            'invoice_id': invoice_id,
+            'order_id': order_id,
+            'customer_id': customer_id,
+            'date_issue': date_issue,
+            'amount_total': amount_total,
+            'amount_due': amount_due,
+            'sender_name': sender_name,
+            'sender_address': sender_address,
+            'sender_vat_id': sender_vat_id,
+            'recipient_name': recipient_name,
+            'recipient_address': recipient_address,
+            'item_description': item_description
         })
     return render(request, 'trial.html')
