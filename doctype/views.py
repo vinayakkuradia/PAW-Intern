@@ -5,6 +5,8 @@ from . dtdalgo import entityextract
 from django.shortcuts import redirect
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.views.decorators.csrf import csrf_exempt
+
 
 # Create your views here.
 def doctype(request):
@@ -52,7 +54,7 @@ def trial(request):
         })
     return render(request, 'trial.html')
 '''
-
+@csrf_exempt
 def trial(request):
     if request.method == 'POST' and request.FILES['myfile']:
         myfile = request.FILES['myfile']

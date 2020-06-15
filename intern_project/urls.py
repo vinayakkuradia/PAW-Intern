@@ -28,7 +28,8 @@ urlpatterns = [
     path('trial/', doctype_views.trial),
     path('upload/', doctype_views.upload),
     path('doctype/', doctype_views.doctype),
-    path('docdata/', docdata_views.RawDataDisplay),
+    path('rawdata/', docdata_views.RawDataDisplay.as_view()),
+    path('processeddata/', docdata_views.ProcessedDataDisplay.as_view()),
     path('employee/', webapp_views.employeeList.as_view()),
 ]
 

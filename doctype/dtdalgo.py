@@ -11,7 +11,7 @@ from docdata.models import RawData, ProcessedData
 import requests
 import json
 import time
-import credentials
+from doctype import credentials
 #Google Cloud APIs requirements
 #from google.cloud import language_v1
 #from google.cloud.language_v1 import enums
@@ -98,7 +98,10 @@ def export():
         return export()
 
 def entityextract(filename):
-    upload(filename)
+    if('jpg' in filename or 'png' in filename):
+        upload(filename[0:-3]+'pdf')
+    else:
+        upload(filename)
     return export()
 
 '''
