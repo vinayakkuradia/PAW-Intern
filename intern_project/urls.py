@@ -31,6 +31,7 @@ urlpatterns = [
     path('rawdata/', docdata_views.RawDataDisplay.as_view()),
     path('processeddata/', docdata_views.ProcessedDataDisplay.as_view()),
     path('employee/', webapp_views.employeeList.as_view()),
+    path('invoice', doctype_views.invoice),
 ]
 
 if settings.DEBUG:

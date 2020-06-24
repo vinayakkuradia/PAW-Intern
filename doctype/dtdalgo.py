@@ -6,7 +6,7 @@ import pytesseract
 import textract
 import PyPDF2
 from PIL import Image
-from docdata.models import RawData, ProcessedData
+from docdata.models import RawData, ProcessedData, BillItem
 #import datetime
 import requests
 import json
@@ -63,37 +63,44 @@ def export():
     res_dict = json.loads(rc.decode('utf-8'))
     status = res_dict["results"][0]['status']
     if (status == 'exported'):
+        items, dict_base = "", res_dict['results'][0]['content']
+        for each in dict_base[5]['children'][0]['children']:
+            items+=each['children'][0]['value'].replace("\n"," ")+", "
         #Entry to Database
         RawData.objects.create(source_file=res_dict['results'][0]['document']['file_name'], json_data=res_dict)
+        rd = RawData.objects.get(source_file=res_dict['results'][0]['document']['file_name'])
         ProcessedData.objects.create(
-            rawdata = RawData.objects.get(source_file=res_dict['results'][0]['document']['file_name']),
-            invoice_id = res_dict['results'][0]['content'][0]['children'][0]['value'],
-            order_id = res_dict['results'][0]['content'][0]['children'][1]['value'],
-            customer_id = res_dict['results'][0]['content'][0]['children'][2]['value'],
-            date_issue = res_dict['results'][0]['content'][0]['children'][3]['value'],
-            amount_total = res_dict['results'][0]['content'][1]['children'][2]['value'],
-            amount_due = res_dict['results'][0]['content'][1]['children'][3]['value'],
-            sender_name = res_dict['results'][0]['content'][2]['children'][0]['value'],
-            sender_address = res_dict['results'][0]['content'][2]['children'][1]['value'],
-            sender_vat_id = res_dict['results'][0]['content'][2]['children'][3]['value'],
-            recipient_name = res_dict['results'][0]['content'][2]['children'][4]['value'],
-            recipient_address = res_dict['results'][0]['content'][2]['children'][5]['value'],
-            item_description = res_dict['results'][0]['content'][5]['children'][0]['children'][0]['children'][0]['value']
+            rawdata = rd,
+            invoice_id = dict_base[0]['children'][0]['value'],
+            order_id = dict_base[0]['children'][1]['value'],
+            customer_id = dict_base[0]['children'][2]['value'],
+            date_issue = dict_base[0]['children'][3]['value'],
+            amount_total = dict_base[1]['children'][2]['value'],
+            amount_due = dict_base[1]['children'][3]['value'],
+            sender_name = dict_base[2]['children'][0]['value'],
+            sender_address = dict_base[2]['children'][1]['value'],
+            sender_vat_id = dict_base[2]['children'][3]['value'],
+            recipient_name = dict_base[2]['children'][4]['value'],
+            recipient_address = dict_base[2]['children'][5]['value'],
+            all_items = items
             )
+        for each in dict_base[5]['children'][0]['children']:
+            items+=each['children'][0]['value'].replace("\n"," ")
+            BillItem.objects.create(rawdata= rd, item_name=each['children'][0]['value'].replace("\n"," ") , item_quantity= each['children'][1]['value'], item_total_amount=each['children'][4]['value'])
         #Processing return variables
-        invoice_id = res_dict['results'][0]['content'][0]['children'][0]['value'],
-        order_id = res_dict['results'][0]['content'][0]['children'][1]['value'],
-        customer_id = res_dict['results'][0]['content'][0]['children'][2]['value'],
-        date_issue = res_dict['results'][0]['content'][0]['children'][3]['value'],
-        amount_total = res_dict['results'][0]['content'][1]['children'][2]['value'],
-        amount_due = res_dict['results'][0]['content'][1]['children'][3]['value'],
-        sender_name = res_dict['results'][0]['content'][2]['children'][0]['value'],
-        sender_address = res_dict['results'][0]['content'][2]['children'][1]['value'],
-        sender_vat_id = res_dict['results'][0]['content'][2]['children'][3]['value'],
-        recipient_name = res_dict['results'][0]['content'][2]['children'][4]['value'],
-        recipient_address = res_dict['results'][0]['content'][2]['children'][5]['value'],
-        item_description = res_dict['results'][0]['content'][5]['children'][0]['children'][0]['children'][0]['value']
-        return (invoice_id, order_id, customer_id, date_issue, amount_total, amount_due, sender_name, sender_address, sender_vat_id, recipient_name, recipient_address, item_description)
+        invoice_id = dict_base[0]['children'][0]['value']
+        order_id = dict_base[0]['children'][1]['value']
+        customer_id = dict_base[0]['children'][2]['value']
+        date_issue = dict_base[0]['children'][3]['value']
+        amount_total = dict_base[1]['children'][2]['value']
+        amount_due = dict_base[1]['children'][3]['value']
+        sender_name = dict_base[2]['children'][0]['value']
+        sender_address = dict_base[2]['children'][1]['value']
+        sender_vat_id = dict_base[2]['children'][3]['value']
+        recipient_name = dict_base[2]['children'][4]['value']
+        recipient_address = dict_base[2]['children'][5]['value']
+        all_items = items
+        return (invoice_id, order_id, customer_id, date_issue, amount_total, amount_due, sender_name, sender_address, sender_vat_id, recipient_name, recipient_address, all_items)
     else:
         return export()
 

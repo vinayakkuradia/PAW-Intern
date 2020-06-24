@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+#from django.http import HttpResponse
 from . dtdalgo import detect
 from . dtdalgo import entityextract
 from django.shortcuts import redirect
-from django.conf import settings
+from docdata.models import ProcessedData, BillItem
+from docdata.serializers import ProcessedDataSerializer, BillItemSerializer
+#from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.views.decorators.csrf import csrf_exempt
 
@@ -62,21 +64,50 @@ def trial(request):
         filename = fs.save(myfile.name, myfile)
         uploaded_file_url = fs.url(filename)
         doctype, text = detect(filename)
-        invoice_id, order_id, customer_id, date_issue, amount_total, amount_due, sender_name, sender_address, sender_vat_id, recipient_name, recipient_address, item_description = entityextract(filename)
-        return render(request, 'trial.html', {
-            'uploaded_file_url': uploaded_file_url,
-            'doctype': doctype,
-            'invoice_id': invoice_id,
-            'order_id': order_id,
-            'customer_id': customer_id,
-            'date_issue': date_issue,
-            'amount_total': amount_total,
-            'amount_due': amount_due,
-            'sender_name': sender_name,
-            'sender_address': sender_address,
-            'sender_vat_id': sender_vat_id,
-            'recipient_name': recipient_name,
-            'recipient_address': recipient_address,
-            'item_description': item_description
-        })
+        if (doctype=="Bill"):
+            invoice_id, order_id, customer_id, date_issue, amount_total, amount_due, sender_name, sender_address, sender_vat_id, recipient_name, recipient_address, all_items = entityextract(filename)
+            return render(request, 'trial.html', {
+                'uploaded_file_url': uploaded_file_url,
+                'doctype': doctype,
+                'invoice_id': invoice_id,
+                'order_id': order_id,
+                'customer_id': customer_id,
+                'date_issue': date_issue,
+                'amount_total': amount_total,
+                'amount_due': amount_due,
+                'sender_name': sender_name,
+                'sender_address': sender_address,
+                'sender_vat_id': sender_vat_id,
+                'recipient_name': recipient_name,
+                'recipient_address': recipient_address,
+                'all_items': all_items
+            })
+        else:
+            null = ""
+            return render(request, 'trial.html', {
+                'uploaded_file_url': uploaded_file_url,
+                'doctype': doctype,
+                'invoice_id': "Document type not suitable for processing",
+                'order_id': null,
+                'customer_id': null,
+                'date_issue': null,
+                'amount_total': null,
+                'amount_due': null,
+                'sender_name': null,
+                'sender_address': null,
+                'sender_vat_id': null,
+                'recipient_name': null,
+                'recipient_address': null,
+                'all_items': null
+            })
     return render(request, 'trial.html')
+
+
+def invoice(request):
+    if(ProcessedData.objects.filter(invoice_id='FABBA21800852041').exists()):
+        pd = ProcessedData.objects.get(invoice_id='FABBA21800852041')
+        pd_serializer = ProcessedDataSerializer(pd)
+        bi = BillItem.objects.get(rawdata=pd.rawdata)
+        bi_serializer = BillItemSerializer(bi)
+        return render(request, 'invoice.html', {'pd': pd_serializer.data, 'bi': bi_serializer.data})
+    return render(request, 'upload.html')
